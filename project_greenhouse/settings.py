@@ -40,7 +40,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_extensions',
     'bootstrap4',
-    'overseer'
+    'taggit',
+    'django_tables2',
+    'overseer',
+    #'six',  # monkeypath for tables incomatibility with dfjango3
 ]
 
 MIDDLEWARE = [
@@ -118,11 +121,75 @@ USE_L10N = True
 USE_TZ = True
 
 
+
+
+from splunk_handler import SplunkHandler
+import os
+
+# Splunk settings
+SPLUNK_HOST = os.getenv('SPLUNK_HOST', '192.168.38.199')
+SPLUNK_PORT = int(os.getenv('SPLUNK_PORT', '8088'))
+SPLUNK_TOKEN = os.getenv('SPLUNK_TOKEN', 'bc4b82e4-d6f4-4f9b-b7b6-63a939e7caef')
+SPLUNK_INDEX = os.getenv('SPLUNK_INDEX', 'main')
+
+
+from splunk_handler import SplunkHandler
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'json': {
+            '()': 'pythonjsonlogger.jsonlogger.JsonFormatter',
+            'format': '%(asctime)s %(created)f %(exc_info)s %(filename)s %(funcName)s %(levelname)s %(levelno)s %(lineno)d %(module)s %(message)s %(pathname)s %(process)s %(processName)s %(relativeCreated)d %(thread)s %(threadName)s'
+        }
+    },
+    'handlers': {
+        'splunk': {
+            'level': 'DEBUG',
+            'class': 'splunk_handler.SplunkHandler',
+            'formatter': 'json',
+            'host': SPLUNK_HOST,
+            'port': SPLUNK_PORT,
+            'token': SPLUNK_TOKEN,
+            'index': SPLUNK_INDEX,
+            'verify': False,
+            'sourcetype': 'json',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        }
+    },
+    'loggers': {
+        '': {
+            'handlers': ['console'],
+            'level': 'DEBUG'
+        },
+        'overseer': {
+            'handlers': ['splunk'],
+            'level': 'DEBUG'
+        }
+    }
+}
+
+
+
+
+
+
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+# https://django-taggit.readthedocs.io/en/latest/getting_started.html
+TAGGIT_CASE_INSENSITIVE = True
+
+VAGRANT_TEMPLATEFILE = os.path.join(BASE_DIR, 'overseer', 'templates', 'Vagrantfile')
+TMPSPACE = os.path.join(BASE_DIR, 'tmp')
 
 ## ADDED LOCAL SETTINGS
 from .settings_local import *
