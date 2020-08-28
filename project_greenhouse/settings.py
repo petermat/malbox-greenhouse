@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '1&o$%f)*0cm-7w)1jwbg7g@61mvv1x)hxev7q026sz%q^em$2a'
+SECRET_KEY = ''
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -127,9 +127,9 @@ from splunk_handler import SplunkHandler
 import os
 
 # Splunk settings
-SPLUNK_HOST = os.getenv('SPLUNK_HOST', '192.168.38.199')
-SPLUNK_PORT = int(os.getenv('SPLUNK_PORT', '8088'))
-SPLUNK_TOKEN = os.getenv('SPLUNK_TOKEN', 'bc4b82e4-d6f4-4f9b-b7b6-63a939e7caef')  # Dummy local token
+SPLUNK_HOST = ""  # Overwritten in setting_local
+SPLUNK_PORT = ""  # Overwritten in setting_local
+SPLUNK_TOKEN = ""  # Overwritten in setting_local
 SPLUNK_INDEX = os.getenv('SPLUNK_INDEX', 'main')
 
 

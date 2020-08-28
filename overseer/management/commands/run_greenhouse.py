@@ -73,12 +73,17 @@ class Command(BaseCommand):
                     vagBox_obj.processed_at = timezone.now()
                     vagBox_obj.status_code = "R"
                     logger.info("Vagrantbox initiated: {}/{}".format(vagBox_obj.username, vagBox_obj.boxname))
+                    vagrantPoolLog_obj.status_message = vagRunObj.get_logs()
                 else:
                     vagBox_obj.status_code = "F"
                     vagBox_obj.processed_at = timezone.now()
                     logger.error("Vagrantbox init Failed: {}/{}".format(vagBox_obj.username, vagBox_obj.boxname))
+                    vagrantPoolLog_obj.status_message = vagRunObj.get_logs()
+                    vagBox_obj.status_message = vagRunObj.get_logs()
+                    vagRunObj.destroy()
+                    logger.info("Destroyed after fail {}/{}".format(vagBox_obj.username, vagBox_obj_tmp.boxname))
 
-                vagrantPoolLog_obj.status_message = vagRunObj.get_logs()
+
                 vagrantPoolLog_obj.save()
 
                 vagBox_obj.save()
