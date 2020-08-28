@@ -4,17 +4,12 @@ Vagrant.configure("2") do |config|
   config.ssh.username = "vagrant"
   config.ssh.password = "vagrant"
   config.vm.hostname = "{{ username }}-{{ boxname }}"
-  # todo: cp /usr/share/osquery/osquery.example.conf /etc/osquery/osquery.conf
-  config.vm.provision :shell, path: "bootstrap.sh"
-  #config.vm.provision "file", source: "./osquery", destination: "/etc/osquery"
   config.vm.synced_folder ".", "/vagrant"
-  config.vm.provision "shell", inline: "cp -RT /vagrant/osquery /etc/osquery"
-  config.vm.provision "shell", inline: "systemctl enable osqueryd"
-  config.vm.provision "shell", inline: "systemctl start osqueryd"
+  config.vm.provision :shell, path: "bootstrap.sh"
 
   config.vm.provider "virtualbox" do |vb, override|
          vb.name = "{{ username }}-{{ boxname }}"
-         #vb.customize ["modifyvm", :id, "--memory", 8192]
-         #vb.customize ["modifyvm", :id, "--cpus", 8]
+         vb.customize ["modifyvm", :id, "--memory", 512]
+         vb.customize ["modifyvm", :id, "--cpus", 1]
   end
 end

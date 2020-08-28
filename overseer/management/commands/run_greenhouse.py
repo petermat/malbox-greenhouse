@@ -17,7 +17,7 @@ class Command(BaseCommand):
     help = 'Run The Greenhouse'
 
     def handle(self, *args, **options):
-        MAX_POOL = 1
+        MAX_POOL = 30
         MEMORY_FREELIMIT = 1024 * 1024 * 1024 # 1024MB
         RUN_MINUTES = 10
         SLEEP_SECONDS = 60
@@ -43,7 +43,7 @@ class Command(BaseCommand):
 
 
             while VagrantBox.objects.filter(Q(status_code='W') | Q(status_code='R')| Q(status_code='I')).count() < MAX_POOL:
-                vagBox_obj = VagrantBox.objects.filter(processed_at__isnull=True).first()
+                vagBox_obj = VagrantBox.objects.filter(processed_at__isnull=True).exclude(status_code="W").first()
                 if not vagBox_obj:
                     logger.info("No Candidates to run, requesting new results")
                     addMoreToQueue()
@@ -81,7 +81,7 @@ class Command(BaseCommand):
                     vagrantPoolLog_obj.status_message = vagRunObj.get_logs()
                     vagBox_obj.status_message = vagRunObj.get_logs()
                     vagRunObj.destroy()
-                    logger.info("Destroyed after fail {}/{}".format(vagBox_obj.username, vagBox_obj_tmp.boxname))
+                    logger.info("Destroyed after fail {}/{}".format(vagBox_obj.username, vagBox_obj.boxname))
 
 
                 vagrantPoolLog_obj.save()

@@ -26,7 +26,7 @@ class VagrantRunObject:
         log_cm = vagrant.make_file_cm(os.path.join(self.vagrantdir_path, 'deployment.log'))
         self.native_obj = vagrant.Vagrant(self.vagrantdir_path,
                                           out_cm=log_cm, err_cm=log_cm,
-                                          quiet_stdout=True, quiet_stderr=False,
+                                          quiet_stdout=False, quiet_stderr=False,
                                           #env=env
                                           )
         #logger.debug("error_obj: ", error_obj)
@@ -75,7 +75,9 @@ class VagrantRunObject:
         except Exception as Err:
             logger.warning("Vagrant destroy failed!")
         os.system("cd {} && vagrant destroy".format(self.vagrantdir_path))
-        shutil.rmtree(os.path.join(os.environ['HOME'], '.vagrant.d', 'boxes', '{}-VAGRANTSLASH-{}'.format(self.username, self.boxname)))
+        shutil.rmtree(os.path.join(os.environ['HOME'], '.vagrant.d', 'boxes', '{}-VAGRANTSLASH-{}'.format(self.username, self.boxname)),
+                      ignore_errors=True
+                      )
         logger.info("Box destroyed: {}/{}".format(self.username, self.boxname))
 
     def status(self):

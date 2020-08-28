@@ -9,6 +9,7 @@ vagrant plugin install vagrant-vbguest
 Manual actions:
 
 - Activate http listener in Splunk and add token to settings_local
+- Add port 9997 to splunk inputs
 
 ## Test
 
