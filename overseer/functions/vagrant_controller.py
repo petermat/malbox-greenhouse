@@ -1,78 +1,85 @@
 from django.conf import settings
-import os, time
+import os
 import shutil
-from django.utils import timezone
 
-from overseer.models import VagrantBox
-from overseer.functions.search_provider import addMoreToQueue
+
+
 import vagrant
-import psutil
+
 
 import logging
 logger = logging.getLogger("overseer")
 
 class VagrantRunObject:
-    def __init__(self):
-        self.native_obj = None
-        self.vagrantfile_path = None
-
-    def prepare_vagrantfile(self, username, boxname):
-        from django.template.loader import render_to_string
-        template = settings.VAGRANT_TEMPLATEFILE
-        context = {'username': username, 'boxname': boxname}
+    def __init__(self, username, boxname):
+        self.username = username
+        self.boxname = boxname
 
         from pathlib import Path
         self.vagrantdir_path = os.path.join(settings.TMPSPACE, username, boxname)
-        Path(self.vagrantdir_path).mkdir(parents=True, exist_ok=True)
 
-        open(os.path.join(self.vagrantdir_path, 'Vagrantfile'), "w").write(render_to_string(template, context))
-        logger.debug("Vagrantfile prepared: {}/{}".format(username, boxname))
+        #env = os.environ.copy()
+        #env['PWD'] = self.vagrantdir_path
+
+        #v.env = os_env
+
+        log_cm = vagrant.make_file_cm(os.path.join(self.vagrantdir_path, 'deployment.log'))
+        self.native_obj = vagrant.Vagrant(self.vagrantdir_path,
+                                          out_cm=log_cm, err_cm=log_cm,
+                                          quiet_stdout=True, quiet_stderr=False,
+                                          #env=env
+                                          )
+        #logger.debug("error_obj: ", error_obj)
+        logger.debug("Vagrantfile native object created: {}/{}".format(username, boxname))
 
 
     def init_vagrant(self):
-        env = os.environ.copy()
-        env['PWD'] = self.vagrantdir_path
+        #def prepare_vagrantfile(self, username, boxname):
+        from django.template.loader import render_to_string
 
-        #v.env = os_env
-        self.native_obj = vagrant.Vagrant(self.vagrantdir_path, quiet_stdout=False, quiet_stderr=False, env=env)
-        self.native_obj.up()
-        logger.debug("Vagrant Box UP: {}".format(self.vagrantdir_path))
+        templatefile = os.path.join(settings.VAGRANT_TEMPLATEFOLDER, 'Vagrantfile' )
+        context = {'username': self.username, 'boxname': self.boxname}
 
 
-    def destroy(self, username, boxname):
-        self.native_obj.destroy()
-        shutil.rmtree(os.path.join(os.environ['HOME'], '.vagrant.d', 'boxes', '{}-VAGRANTSLASH-{}'.format(username, boxname)))
-        logger.info("Box destroyed: {}/{}".format(username, boxname))
+        shutil.rmtree(self.vagrantdir_path, ignore_errors=True)
+        #Path(self.vagrantdir_path).mkdir(parents=True, exist_ok=True)
+        shutil.copytree(settings.VAGRANT_TEMPLATEFOLDER, self.vagrantdir_path)
+        logger.debug("Blueprint files copied to Vagrantile folder {}/{}".format(self.username, self.boxname))
+
+        open(os.path.join(self.vagrantdir_path, 'Vagrantfile'), "w").write(render_to_string(templatefile, context))
+        logger.debug("Vagrantfile prepared: {}/{}".format(self.username, self.boxname))
+
+
+    def up_vagrant(self):
+        logger.debug("Vagrant about to UP: {}".format(self.vagrantdir_path))
+        try:
+            self.native_obj.up()
+            logger.debug("Vagrant Box UP done: {}".format(self.vagrantdir_path))
+            return True
+        except Exception as Err:
+            logger.error("Vagrant init filed: {}".format(Err))
+            return False
+
+
+    def get_logs(self):
+        # Open a file: file
+        file = open(os.path.join(self.vagrantdir_path, 'deployment.log'), mode='r')
+        content = file.read()
+        logger.debug("Logs retrieved, size: {}".format(len(content)))
+        file.close()
+        return content
+
+    def destroy(self):
+        try:
+            self.native_obj.destroy()
+        except Exception as Err:
+            logger.warning("Vagrant destroy failed!")
+        os.system("cd {} && vagrant destroy".format(self.vagrantdir_path))
+        shutil.rmtree(os.path.join(os.environ['HOME'], '.vagrant.d', 'boxes', '{}-VAGRANTSLASH-{}'.format(self.username, self.boxname)))
+        logger.info("Box destroyed: {}/{}".format(self.username, self.boxname))
 
     def status(self):
-        self.native_obj.status(name='default')
+        self.native_obj.status()
 
 
 
-class VagrantLoop:
-    def __init__(self):
-        pass
-
-    def start(self):
-        while True:
-            if psutil.virtual_memory().available // 1024 // 1024 > 1024:
-                if VagrantBox.objects.filter(processed_at__isnull=True):
-                    vag_obj = VagrantBox.objects.filter(processed_at__isnull=True).latest('id')
-                    logger.debug("Vagrantbox about to init: {}/{}, found {} candidates".format(vag_obj.username, vag_obj.boxname,
-                                                   VagrantBox.objects.filter(processed_at__isnull=True).count() ))
-                    obj = VagrantRunObject()
-                    obj.prepare_vagrantfile(vag_obj.username, vag_obj.boxname)
-                    obj.init_vagrant()
-                    logger.debug("Vagrantbox initiated: {}/{}".format(vag_obj.username, vag_obj.boxname))
-                    time.sleep(10)
-                    logger.debug("About to destroy {}/{}".format(vag_obj.username, vag_obj.boxname))
-                    obj.destroy(vag_obj.username, vag_obj.boxname)
-                    logger.debug("Destroyed {}/{}".format(vag_obj.username, vag_obj.boxname))
-                    vag_obj.processed_at = timezone.now()
-                    vag_obj.save()
-                else:
-                    logger.info("No Candidates to run, requesting new results")
-                    addMoreToQueue()
-            else:
-                logger.warning("Not enough memory to run: {}".format(psutil.virtual_memory().available // 1024 // 1024))
-                break

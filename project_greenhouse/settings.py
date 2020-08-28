@@ -61,7 +61,7 @@ ROOT_URLCONF = 'project_greenhouse.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'overseer', 'blueprints'),],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -129,7 +129,7 @@ import os
 # Splunk settings
 SPLUNK_HOST = os.getenv('SPLUNK_HOST', '192.168.38.199')
 SPLUNK_PORT = int(os.getenv('SPLUNK_PORT', '8088'))
-SPLUNK_TOKEN = os.getenv('SPLUNK_TOKEN', 'bc4b82e4-d6f4-4f9b-b7b6-63a939e7caef')
+SPLUNK_TOKEN = os.getenv('SPLUNK_TOKEN', 'bc4b82e4-d6f4-4f9b-b7b6-63a939e7caef')  # Dummy local token
 SPLUNK_INDEX = os.getenv('SPLUNK_INDEX', 'main')
 
 
@@ -142,8 +142,29 @@ LOGGING = {
         'json': {
             '()': 'pythonjsonlogger.jsonlogger.JsonFormatter',
             'format': '%(asctime)s %(created)f %(exc_info)s %(filename)s %(funcName)s %(levelname)s %(levelno)s %(lineno)d %(module)s %(message)s %(pathname)s %(process)s %(processName)s %(relativeCreated)d %(thread)s %(threadName)s'
-        }
+        },
+        'color': {
+            '()': 'colorlog.ColoredFormatter',
+            'format': '%(log_color)s%(asctime)s %(levelname)-8s %(message)s',
+            'log_colors': {
+                'DEBUG':    'bold_black',
+                'INFO':     'white',
+                'WARNING':  'yellow',
+                'ERROR':    'red',
+                'CRITICAL': 'bold_red',
+            },
+        },
+
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{asctime} {levelname} {message}',
+            'style': '{',
+        },
     },
+
     'handlers': {
         'splunk': {
             'level': 'DEBUG',
@@ -159,6 +180,8 @@ LOGGING = {
         'console': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+
         }
     },
     'loggers': {
@@ -169,7 +192,10 @@ LOGGING = {
         'overseer': {
             'handlers': ['splunk'],
             'level': 'DEBUG'
-        }
+        },
+        'asyncio': {
+            'level': 'WARNING',
+        },
     }
 }
 
@@ -188,7 +214,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 # https://django-taggit.readthedocs.io/en/latest/getting_started.html
 TAGGIT_CASE_INSENSITIVE = True
 
-VAGRANT_TEMPLATEFILE = os.path.join(BASE_DIR, 'overseer', 'templates', 'Vagrantfile')
+VAGRANT_TEMPLATEFOLDER = os.path.join(BASE_DIR, 'overseer', 'blueprints', 'ubuntu1' )
 TMPSPACE = os.path.join(BASE_DIR, 'tmp')
 
 ## ADDED LOCAL SETTINGS
