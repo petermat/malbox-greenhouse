@@ -1,0 +1,236 @@
+#! /bin/bash
+
+# Override existing DNS Settings using netplan, but don't do it for Terraform builds
+if ! curl -s 169.254.169.254 --connect-timeout 2 >/dev/null; then
+  echo -e "    eth1:\n      dhcp4: true\n      nameservers:\n        addresses: [8.8.8.8,8.8.4.4]" >> /etc/netplan/01-netcfg.yaml
+  netplan apply
+fi
+sed -i 's/nameserver 127.0.0.53/nameserver 8.8.8.8/g' /etc/resolv.conf && chattr +i /etc/resolv.conf
+
+
+export DEBIAN_FRONTEND=noninteractive
+
+apt_install_prerequisites() {
+  echo "[$(date +%H:%M:%S)]: Adding apt repositories..."
+  # Add repository for apt-fast
+  add-apt-repository -y ppa:apt-fast/stable
+  # Add repository for yq
+  add-apt-repository -y ppa:rmescandon/yq
+  # Add repository for suricata
+  add-apt-repository -y ppa:oisf/suricata-stable
+  # Install prerequisites and useful tools
+  echo "[$(date +%H:%M:%S)]: Running apt-get clean..."
+  apt-get clean
+  echo "[$(date +%H:%M:%S)]: Running apt-get update..."
+  apt-get -qq update
+  apt-get -qq install -y apt-fast
+  echo "[$(date +%H:%M:%S)]: Running apt-fast install..."
+  apt-fast -qq install -y jq whois build-essential git docker docker-compose unzip htop yq
+}
+
+test_prerequisites() {
+  for package in jq whois build-essential git docker docker-compose unzip yq; do
+    echo "[$(date +%H:%M:%S)]: [TEST] Validating that $package is correctly installed..."
+    # Loop through each package using dpkg
+    if ! dpkg -S $package >/dev/null; then
+      # If which returns a non-zero return code, try to re-install the package
+      echo "[-] $package was not found. Attempting to reinstall."
+      apt-get -qq update && apt-get install -y $package
+      if ! which $package >/dev/null; then
+        # If the reinstall fails, give up
+        echo "[X] Unable to install $package even after a retry. Exiting."
+        exit 1
+      fi
+    else
+      echo "[+] $package was successfully installed!"
+    fi
+  done
+}
+
+
+install_splunk() {
+  # Check if Splunk is already installed
+  if [ -f "/opt/splunk/bin/splunk" ]; then
+    echo "[$(date +%H:%M:%S)]: Splunk is already installed"
+  else
+    echo "[$(date +%H:%M:%S)]: Installing Splunk..."
+    # Get download.splunk.com into the DNS cache. Sometimes resolution randomly fails during wget below
+    dig @8.8.8.8 download.splunk.com >/dev/null
+    dig @8.8.8.8 splunk.com >/dev/null
+    dig @8.8.8.8 www.splunk.com >/dev/null
+
+    # Try to resolve the latest version of Splunk by parsing the HTML on the downloads page
+    echo "[$(date +%H:%M:%S)]: Attempting to autoresolve the latest version of Splunk..."
+    LATEST_SPLUNK=$(curl https://www.splunk.com/en_us/download/splunk-enterprise.html | grep -i deb | grep -Eo "data-link=\"................................................................................................................................" | cut -d '"' -f 2)
+    # Sanity check what was returned from the auto-parse attempt
+    if [[ "$(echo "$LATEST_SPLUNK" | grep -c "^https:")" -eq 1 ]] && [[ "$(echo "$LATEST_SPLUNK" | grep -c "\.deb$")" -eq 1 ]]; then
+      echo "[$(date +%H:%M:%S)]: The URL to the latest Splunk version was automatically resolved as: $LATEST_SPLUNK"
+      echo "[$(date +%H:%M:%S)]: Attempting to download..."
+      wget --progress=bar:force -P /opt "$LATEST_SPLUNK"
+    else
+      echo "[$(date +%H:%M:%S)]: Unable to auto-resolve the latest Splunk version. Falling back to hardcoded URL..."
+      # Download Hardcoded Splunk
+      wget --progress=bar:force -O /opt/splunk-8.0.2-a7f645ddaf91-linux-2.6-amd64.deb 'https://download.splunk.com/products/splunk/releases/8.0.2/linux/splunk-8.0.2-a7f645ddaf91-linux-2.6-amd64.deb&wget=true'
+    fi
+    if ! ls /opt/splunk*.deb 1> /dev/null 2>&1; then
+      echo "Something went wrong while trying to download Splunk. This script cannot continue. Exiting."
+      exit 1
+    fi
+    if ! dpkg -i /opt/splunk*.deb > /dev/null; then
+      echo "Something went wrong while trying to install Splunk. This script cannot continue. Exiting."
+      exit 1
+    fi
+
+    /opt/splunk/bin/splunk start --accept-license --answer-yes --no-prompt --seed-passwd changeme
+    #/opt/splunk/bin/splunk add index wineventlog -auth 'admin:changeme'
+    #/opt/splunk/bin/splunk add index osquery -auth 'admin:changeme'
+    #/opt/splunk/bin/splunk add index osquery-status -auth 'admin:changeme'
+    #/opt/splunk/bin/splunk add index sysmon -auth 'admin:changeme'
+    #/opt/splunk/bin/splunk add index powershell -auth 'admin:changeme'
+    #/opt/splunk/bin/splunk add index zeek -auth 'admin:changeme'
+    #/opt/splunk/bin/splunk add index suricata -auth 'admin:changeme'
+    #/opt/splunk/bin/splunk add index threathunting -auth 'admin:changeme'
+    #/opt/splunk/bin/splunk install app /vagrant/resources/splunk_forwarder/splunk-add-on-for-microsoft-windows_700.tgz -auth 'admin:changeme'
+    #/opt/splunk/bin/splunk install app /vagrant/resources/splunk_server/splunk-add-on-for-microsoft-sysmon_1062.tgz -auth 'admin:changeme'
+    #/opt/splunk/bin/splunk install app /vagrant/resources/splunk_server/asn-lookup-generator_110.tgz -auth 'admin:changeme'
+    #/opt/splunk/bin/splunk install app /vagrant/resources/splunk_server/lookup-file-editor_331.tgz -auth 'admin:changeme'
+    #/opt/splunk/bin/splunk install app /vagrant/resources/splunk_server/splunk-add-on-for-zeek-aka-bro_400.tgz -auth 'admin:changeme'
+    #/opt/splunk/bin/splunk install app /vagrant/resources/splunk_server/force-directed-app-for-splunk_200.tgz -auth 'admin:changeme'
+    #/opt/splunk/bin/splunk install app /vagrant/resources/splunk_server/punchcard-custom-visualization_130.tgz -auth 'admin:changeme'
+    #/opt/splunk/bin/splunk install app /vagrant/resources/splunk_server/sankey-diagram-custom-visualization_130.tgz -auth 'admin:changeme'
+    #/opt/splunk/bin/splunk install app /vagrant/resources/splunk_server/link-analysis-app-for-splunk_161.tgz -auth 'admin:changeme'
+    #/opt/splunk/bin/splunk install app /vagrant/resources/splunk_server/threathunting_141.tgz -auth 'admin:changeme'
+
+
+    # Add custom Macro definitions for ThreatHunting App
+    #cp /vagrant/resources/splunk_server/macros.conf /opt/splunk/etc/apps/ThreatHunting/default/macros.conf
+    # Fix Windows TA macros
+    #mkdir /opt/splunk/etc/apps/Splunk_TA_windows/local
+    #cp /opt/splunk/etc/apps/Splunk_TA_windows/default/macros.conf /opt/splunk/etc/apps/Splunk_TA_windows/local
+    #sed -i 's/wineventlog_windows/wineventlog/g' /opt/splunk/etc/apps/Splunk_TA_windows/local/macros.conf
+    # Fix Force Directed App until 2.0.1 is released (https://answers.splunk.com/answers/668959/invalid-key-in-stanza-default-value-light.html#answer-669418)
+    #rm /opt/splunk/etc/apps/force_directed_viz/default/savedsearches.conf
+
+    # Add a Splunk TCP input on port 9997
+    echo -e "[splunktcp://9997]\nconnection_host = ip" >/opt/splunk/etc/apps/search/local/inputs.conf
+    # Add props.conf and transforms.conf
+    #cp /vagrant/resources/splunk_server/props.conf /opt/splunk/etc/apps/search/local/
+    #cp /vagrant/resources/splunk_server/transforms.conf /opt/splunk/etc/apps/search/local/
+    cp /opt/splunk/etc/system/default/limits.conf /opt/splunk/etc/system/local/limits.conf
+    # Bump the memtable limits to allow for the ASN lookup table
+    sed -i.bak 's/max_memtable_bytes = 10000000/max_memtable_bytes = 30000000/g' /opt/splunk/etc/system/local/limits.conf
+
+    # Skip Splunk Tour and Change Password Dialog
+    echo "[$(date +%H:%M:%S)]: Disabling the Splunk tour prompt..."
+    touch /opt/splunk/etc/.ui_login
+    mkdir -p /opt/splunk/etc/users/admin/search/local
+    echo -e "[search-tour]\nviewed = 1" >/opt/splunk/etc/system/local/ui-tour.conf
+    # Source: https://answers.splunk.com/answers/660728/how-to-disable-the-modal-pop-up-help-us-to-improve.html
+    if [ ! -d "/opt/splunk/etc/users/admin/user-prefs/local" ]; then
+      mkdir -p "/opt/splunk/etc/users/admin/user-prefs/local"
+    fi
+    echo '[general]
+render_version_messages = 1
+dismissedInstrumentationOptInVersion = 4
+notification_python_3_impact = false
+display.page.home.dashboardId = /servicesNS/nobody/search/data/ui/views/logger_dashboard' > /opt/splunk/etc/users/admin/user-prefs/local/user-prefs.conf
+    # Enable SSL Login for Splunk
+    echo -e "[settings]\nenableSplunkWebSSL = true" >/opt/splunk/etc/system/local/web.conf
+    # Copy over the Logger Dashboard
+    #if [ ! -d "/opt/splunk/etc/apps/search/local/data/ui/views" ]; then
+    #  mkdir -p "/opt/splunk/etc/apps/search/local/data/ui/views"
+    #fi
+    #cp /vagrant/resources/splunk_server/logger_dashboard.xml /opt/splunk/etc/apps/search/local/data/ui/views || echo "Unable to find dashboard"
+    # Reboot Splunk to make changes take effect
+    /opt/splunk/bin/splunk restart
+    /opt/splunk/bin/splunk enable boot-start
+  fi
+}
+
+install_fleet() {
+  # Install Fleet
+  if [ -f "/opt/kolide-quickstart" ]; then
+    echo "[$(date +%H:%M:%S)]: Fleet is already installed"
+  else
+    echo "[$(date +%H:%M:%S)]: Installing Fleet..."
+    echo -e "\n127.0.0.1       kolide" >>/etc/hosts
+    echo -e "\n127.0.0.1       logger" >>/etc/hosts
+    cd /opt && git clone https://github.com/kolide/kolide-quickstart.git
+    cd /opt/kolide-quickstart || echo "Something went wrong while trying to clone the kolide-quickstart repository"
+    cp /vagrant/resources/fleet/server.* .
+    sed -i 's/ -it//g' demo.sh
+    ./demo.sh up simple
+    # Set the enrollment secret to match what we deploy to Windows hosts
+    docker run --rm --network=kolidequickstart_default mysql:5.7 mysql -h mysql -u kolide --password=kolide -e 'update app_configs set osquery_enroll_secret = "enrollmentsecret" where id=1;' --batch kolide
+    # Set snapshot events to be split into multiple events
+    docker run --rm --network=kolidequickstart_default mysql:5.7 mysql -h mysql -u kolide --password=kolide -e 'insert into options (name, type, value) values ("logger_snapshot_event_type", 2, "true");' --batch kolide
+    echo "Updated enrollment secret"
+  fi
+}
+
+download_palantir_osquery_config() {
+  if [ -f /opt/osquery-configuration ]; then
+    echo "[$(date +%H:%M:%S)]: osquery configs have already been downloaded"
+  else
+    # Import Palantir osquery configs into Fleet
+    echo "[$(date +%H:%M:%S)]: Downloading Palantir osquery configs..."
+    cd /opt && git clone https://github.com/palantir/osquery-configuration.git
+  fi
+}
+
+import_osquery_config_into_fleet() {
+  cd /opt || exit 1
+  wget --progress=bar:force https://github.com/kolide/fleet/releases/download/2.4.0/fleet.zip
+  unzip fleet.zip -d fleet
+  cp fleet/linux/fleetctl /usr/local/bin/fleetctl && chmod +x /usr/local/bin/fleetctl
+  fleetctl config set --address https://192.168.38.105:8412
+  fleetctl config set --tls-skip-verify true
+  fleetctl setup --email admin@detectionlab.network --username admin --password 'admin123#' --org-name DetectionLab
+  fleetctl login --email admin@detectionlab.network --password 'admin123#'
+
+  # Change the query invervals to reflect a lab environment
+  # Every hour -> Every 3 minutes
+  # Every 24 hours -> Every 15 minutes
+  sed -i 's/interval: 3600/interval: 180/g' osquery-configuration/Fleet/Endpoints/MacOS/osquery.yaml
+  sed -i 's/interval: 3600/interval: 180/g' osquery-configuration/Fleet/Endpoints/Windows/osquery.yaml
+  sed -i 's/interval: 28800/interval: 900/g' osquery-configuration/Fleet/Endpoints/MacOS/osquery.yaml
+  sed -i 's/interval: 28800/interval: 900/g' osquery-configuration/Fleet/Endpoints/Windows/osquery.yaml
+
+  # Don't log osquery INFO messages
+  # Fix snapshot event formatting
+  fleetctl get options > /tmp/options.yaml
+  /usr/bin/yq w -i /tmp/options.yaml 'spec.config.options.logger_min_status' '1'
+  /usr/bin/yq w -i /tmp/options.yaml 'spec.config.options.logger_snapshot_event_type' '2'
+  fleetctl apply -f /tmp/options.yaml
+
+  # Use fleetctl to import YAML files
+  fleetctl apply -f osquery-configuration/Fleet/Endpoints/MacOS/osquery.yaml
+  fleetctl apply -f osquery-configuration/Fleet/Endpoints/Windows/osquery.yaml
+  for pack in osquery-configuration/Fleet/Endpoints/packs/*.yaml; do
+    fleetctl apply -f "$pack"
+  done
+
+  # Add Splunk monitors for Fleet
+  /opt/splunk/bin/splunk add monitor "/opt/kolide-quickstart/osquery_result" -index osquery -sourcetype 'osquery:json' -auth 'admin:changeme'
+  /opt/splunk/bin/splunk add monitor "/opt/kolide-quickstart/osquery_status" -index osquery-status -sourcetype 'osquery:status' -auth 'admin:changeme'
+}
+
+
+
+postinstall_tasks() {
+  # Include Splunk and Zeek in the PATH
+  echo "export SPLUNK_HOME=/opt/splunk" >>~/.bashrc
+}
+
+main() {
+  apt_install_prerequisites
+  test_prerequisites
+  install_splunk
+  #install_fleet
+  #download_palantir_osquery_config
+  #import_osquery_config_into_fleet
+  postinstall_tasks
+}
+
+main
+exit 0
