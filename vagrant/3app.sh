@@ -13,11 +13,15 @@ gnome_settings(){
 }
 
 
-
+get_repo(){
+   mkdir ~/workspace && cd workspace
+   git clone git@github.com:petermat/malbox-greenhouse.git 
+}
 
 main(){
     echo "[$(date +%H:%M:%S)]: XXX 3app.sh script started"
     gnome_settings    
+    get_repo
     echo "[$(date +%H:%M:%S)]: XXX 3app.sh script finished"
 }
 

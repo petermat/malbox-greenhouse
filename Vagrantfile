@@ -13,8 +13,8 @@ Vagrant.configure("2") do |config|
         cfg.vm.provision "file", source: "vagrant/id_rsa", destination: "/home/vagrant/.ssh/id_rsa"
         cfg.vm.provision "file", source: "vagrant/id_rsa.pub", destination: "/home/vagrant/.ssh/id_rsa.pub"
         #cfg.vm.provision "file", source: "resources/000-default.conf", destination: "/home/vagrant/000-default.conf"
-        #cfg.vm.provision "shell", inline: "chmod 600 /home/vagrant/.ssh/id_rsa"
-        cfg.vm.provision "shell", inline: "mkdir /home/vagrant/workspace && cp -RT /vagrant /home/vagrant/workspace"
+        cfg.vm.provision "shell", inline: "chmod 600 /home/vagrant/.ssh/id_rsa"
+        #cfg.vm.provision "shell", inline: "mkdir /home/vagrant/workspace && cp -RT /vagrant /home/vagrant/workspace"
 	cfg.vm.provision :shell, path: "vagrant/3app.sh", privileged: false
         
         cfg.vm.provider "virtualbox" do |vb, override|
