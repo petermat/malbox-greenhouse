@@ -1,10 +1,12 @@
+# require vagrant plugin install vagrant-disksize
+
 Vagrant.configure("2") do |config|
     config.vm.define "malbox-greenhouse" do |cfg|
         cfg.ssh.username = "vagrant"
-        cfg.ssh.password = "vagrantgg"
+        cfg.ssh.password = "vagrant"
         cfg.vm.box = "bento/ubuntu-20.04"
         cfg.vm.hostname = "malbox-greenhouse"
-        cfg.vm.disk :disk, size: "450GB", primary: true
+        cfg.disksize.size = '450GB'
         #config.vbguest.auto_update = true # virtualbox tools
         cfg.vm.synced_folder ".", "/vagrant"
         cfg.vm.network :private_network, ip: "192.168.38.162", gateway: "192.168.38.1", dns: "8.8.8.8"

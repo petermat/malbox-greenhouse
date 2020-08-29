@@ -20,11 +20,11 @@ install_desktop(){
   apt-get clean
   echo "[$(date +%H:%M:%S)]: Running apt-get update & upgrade..."
   apt-get -qq update
-  apt-get -qq upgrade -y 2>/dev/null 
+  apt-get -qq upgrade -y 2>/dev/null
   echo "[$(date +%H:%M:%S)]: Apt install core packages"
   apt-get install -y -qq software-properties-common build-essential  < /dev/null > /dev/null
   echo "[$(date +%H:%M:%S)]: Install Ubuntu desktop..."
-  
+
   apt-get -y -qq install tasksel
   apt-get -y -qq install ubuntu-desktop
   #startx --:7:
@@ -43,13 +43,16 @@ install_packages(){
   #curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash –
   apt-get -y -qq install nodejs
   apt-get -y -qq install npm
-  apt-get -y -qq install python3-virtualenv
+  apt-get  -y -qq install python3 python-dev python3-dev python3-virtualenv \
+     build-essential libssl-dev libffi-dev \
+     libxml2-dev libxslt1-dev zlib1g-dev \
+     python3-pip
 }
 
 
 install_devapps(){
     snap install sublime-text --classic
-    snap install chromium 
+    snap install chromium
     snap install pycharm-community --classic
     snap install --classic atom
 }
@@ -57,7 +60,7 @@ install_devapps(){
 install_docker(){
   apt-get  install -qq -y docker.io
   usermod -aG docker vagrant
-  #usermod -a -G docker www-data 
+  #usermod -a -G docker www-data
   systemctl enable docker
   systemctl start docker
 }
@@ -83,6 +86,3 @@ main(){
 
 main
 exit 0
-
-
-

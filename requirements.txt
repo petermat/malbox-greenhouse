@@ -6,6 +6,7 @@ CacheControl==0.12.6
 certifi==2019.11.28
 chardet==3.0.4
 colorama==0.4.3
+colorlog==4.2.1
 contextlib2==0.6.0
 decorator==4.4.2
 distlib==0.3.0

@@ -4,6 +4,7 @@ Vagrant.configure("2") do |config|
   config.ssh.username = "vagrant"
   config.ssh.password = "vagrant"
   config.vm.hostname = "{{ username }}-{{ boxname }}"
+  config.disksize.size = '8GB'
   config.vm.synced_folder ".", "/vagrant"
   config.vm.provision :shell, path: "bootstrap.sh"
   config.vm.provider "virtualbox" do |vb, override|
@@ -11,6 +12,4 @@ Vagrant.configure("2") do |config|
          vb.customize ["modifyvm", :id, "--memory", 512]
          vb.customize ["modifyvm", :id, "--cpus", 1]
   end
-  config.vm.disk :disk, size: "8GB", primary: true
-
 end
