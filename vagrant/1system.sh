@@ -43,7 +43,7 @@ install_packages(){
   #curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash –
   apt-get -y -qq install nodejs
   apt-get -y -qq install npm
-  apt-get -y -qq python3-virtualenv
+  apt-get -y -qq install python3-virtualenv
 }
 
 

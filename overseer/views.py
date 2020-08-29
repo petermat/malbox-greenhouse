@@ -7,8 +7,6 @@ from .tables import *
 
 def homePageView(request):
     context = {}
-    from .functions.vagrant_controller import VagrantRunObject
-    obj = VagrantRunObject()
     return render(request, 'index.html', context)
 
 

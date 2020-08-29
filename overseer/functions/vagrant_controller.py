@@ -54,7 +54,7 @@ class VagrantRunObject:
         logger.debug("Vagrant about to UP: {}".format(self.vagrantdir_path))
         try:
             self.native_obj.up()
-            logger.debug("Vagrant Box UP done: {}".format(self.vagrantdir_path))
+            logger.info("Vagrant Box UP done: {}".format(self.vagrantdir_path))
             return True
         except Exception as Err:
             logger.error("Vagrant init filed: {}".format(Err))

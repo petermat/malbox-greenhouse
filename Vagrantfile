@@ -2,8 +2,9 @@ Vagrant.configure("2") do |config|
     config.vm.define "malbox-greenhouse" do |cfg|
         cfg.ssh.username = "vagrant"
         cfg.ssh.password = "vagrantgg"
-        config.vm.box = "bento/ubuntu-20.04"
+        cfg.vm.box = "bento/ubuntu-20.04"
         cfg.vm.hostname = "malbox-greenhouse"
+        cfg.vm.disk :disk, size: "450GB", primary: true
         #config.vbguest.auto_update = true # virtualbox tools
         cfg.vm.synced_folder ".", "/vagrant"
         cfg.vm.network :private_network, ip: "192.168.38.162", gateway: "192.168.38.1", dns: "8.8.8.8"
@@ -16,7 +17,7 @@ Vagrant.configure("2") do |config|
         cfg.vm.provision "shell", inline: "chmod 600 /home/vagrant/.ssh/id_rsa"
         #cfg.vm.provision "shell", inline: "mkdir /home/vagrant/workspace && cp -RT /vagrant /home/vagrant/workspace"
 	cfg.vm.provision :shell, path: "vagrant/3app.sh", privileged: false
-        
+
         cfg.vm.provider "virtualbox" do |vb, override|
             vb.gui = true
             vb.name = "malbox-greenhouse"
