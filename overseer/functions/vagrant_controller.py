@@ -38,7 +38,10 @@ class VagrantRunObject:
         from django.template.loader import render_to_string
 
         templatefile = os.path.join(settings.VAGRANT_TEMPLATEFOLDER, 'Vagrantfile' )
-        context = {'username': self.username, 'boxname': self.boxname}
+        context = {'username': self.username,
+                   'boxname': self.boxname,
+                   'username_no_underscore': self.username.replace("_", "-"),  # hostname cannot contain underscore !!!
+                   'boxname_no_underscore': self.boxname.replace("_", "-")}  # hostname cannot contain underscore !!!
 
 
         shutil.rmtree(self.vagrantdir_path, ignore_errors=True)

@@ -19,6 +19,9 @@ Manual actions:
   `iptables -A OUTPUT -m iprange --dst-range 192.168.4.0-192.168.4.255 -j DROP`
   `iptables -A OUTPUT -m iprange --dst-range 192.168.38.1-192.168.38.198 -j DROP`
 
+-extend partition
+- `sudo lvextend -l +1112961 /dev/vgvagrant/root`
+- `sudo resize2fs -p /dev/vgvagrant/root`
 
 ## Init App
 

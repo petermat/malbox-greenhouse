@@ -26,3 +26,21 @@ SHELL_PLUS = "ipython"
 LOGGING['handlers']['splunk']['token'] = os.getenv('SPLUNK_TOKEN', '')
 LOGGING['handlers']['splunk']['host'] = os.getenv('SPLUNK_HOST', '')
 LOGGING['handlers']['splunk']['port'] = int(os.getenv('SPLUNK_PORT', ''))
+
+"""
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': '',
+        'USER': '',
+        'PASSWORD': '',
+        'HOST': '',
+        'PORT': '',
+    }
+}
+"""
+
+MAX_POOL = 10
+MEMORY_FREELIMIT = 1024 * 1024 * 1024  # 1024MB
+RUN_MINUTES = 70
+SLEEP_SECONDS = 60

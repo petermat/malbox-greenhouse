@@ -81,6 +81,7 @@ WSGI_APPLICATION = 'project_greenhouse.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
+# overwriten in settings_local
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',

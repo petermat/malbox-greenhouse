@@ -22,6 +22,7 @@ class VagrantBox(models.Model):
     processed_at = models.DateTimeField(auto_now_add=False, auto_now=False, blank=True, null=True)
     status_code = models.CharField(max_length=10, choices=STATUS, blank=True, null=True)
     status_message = models.TextField(blank=True, null=True)
+    worker_name = models.CharField(max_length=50, blank=True, null=True)
     #results_code =
     #result_message =
 
@@ -37,3 +38,4 @@ class VagrantPoolLog(models.Model):
 class SearchBacklog(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     pagenumber = models.SmallIntegerField()
+    worker_name = models.CharField(max_length=50, blank=True, null=True)
