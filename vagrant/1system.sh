@@ -70,6 +70,7 @@ install_vagrant(){
   apt-get install -y virtualbox
   apt-get install -y virtualbox-guest-additions-iso
   apt-get install -y vagrant
+  apt-get install -y gparted
 }
 
 main(){

@@ -31,7 +31,7 @@ class Command(BaseCommand):
                                                             processed_at__lte=(timezone.now() - timedelta(minutes=RUN_MINUTES)),
                                                             worker_name = os.uname()[1]):
                 vagRunObj_tmp = VagrantRunObject(vagBox_obj_tmp.username, vagBox_obj_tmp.boxname)
-                VagrantPoolLog.objects.create(status_code="D", vagrant_box=vagBox_obj_tmp, worker_name=os.uname()[1])
+                VagrantPoolLog.objects.create(status_code="D", vagrant_box=vagBox_obj_tmp)
 
                 logger.debug("About to destroy {}/{}".format(vagBox_obj_tmp.username, vagBox_obj_tmp.boxname))
                 vagRunObj_tmp.destroy()
@@ -53,7 +53,7 @@ class Command(BaseCommand):
                     addMoreToQueue()
                     vagBox_obj = VagrantBox.objects.filter(processed_at__isnull=True).first()
 
-                VagrantPoolLog.objects.create(status_code="W", vagrant_box=vagBox_obj, worker_name=os.uname()[1])
+                VagrantPoolLog.objects.create(status_code="W", vagrant_box=vagBox_obj)
                 logger.debug("VagrantBox {}/{} changed to 'Waiting'".format(vagBox_obj.username, vagBox_obj.boxname))
                 vagBox_obj.status_code = "W"
                 vagBox_obj.worker_name = os.uname()[1]
@@ -72,7 +72,7 @@ class Command(BaseCommand):
                 logger.info("Vagrantbox starting init sequence: {}/{}, found {} candidates".format(vagBox_obj.username, vagBox_obj.boxname,
                                                VagrantBox.objects.filter(status_code="W").count() ))
                 vagRunObj = VagrantRunObject(vagBox_obj.username, vagBox_obj.boxname)
-                vagrantPoolLog_obj = VagrantPoolLog.objects.create(status_code="R", vagrant_box=vagBox_obj, worker_name=os.uname()[1])
+                vagrantPoolLog_obj = VagrantPoolLog.objects.create(status_code="R", vagrant_box=vagBox_obj)
                 vagrantPoolLog_obj.save()
 
                 vagRunObj.init_vagrant()
