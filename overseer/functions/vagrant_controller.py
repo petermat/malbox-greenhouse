@@ -77,7 +77,7 @@ class VagrantRunObject:
             self.native_obj.destroy()
         except Exception as Err:
             logger.warning("Vagrant destroy failed!")
-        os.system("cd {} && vagrant destroy".format(self.vagrantdir_path))
+        os.system("cd {} && vagrant destroy --force".format(self.vagrantdir_path))
         shutil.rmtree(os.path.join(os.environ['HOME'], '.vagrant.d', 'boxes', '{}-VAGRANTSLASH-{}'.format(self.username, self.boxname)),
                       ignore_errors=True
                       )
