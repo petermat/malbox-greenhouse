@@ -15,7 +15,7 @@ gnome_settings(){
 
 get_repo(){
    mkdir ~/workspace && cd workspace
-   git clone git@github.com:petermat/malbox-greenhouse.git 
+   git clone https://github.com/petermat/malbox-greenhouse.git
 }
 
 main(){
