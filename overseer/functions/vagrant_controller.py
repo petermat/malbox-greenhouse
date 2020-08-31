@@ -6,9 +6,33 @@ import shutil
 
 import vagrant
 
-
+import subprocess
 import logging
 logger = logging.getLogger("overseer")
+
+
+
+def getActiveVagrantboxes():
+
+    # vagrant global-status --prune
+    # vagrant global-status --machine-readable
+
+    subprocess.run(['vagrant', 'global-status', '--prune'], stdout=subprocess.PIPE)
+    result = subprocess.run(['vagrant', 'global-status', '--machine-readable'], stdout=subprocess.PIPE)
+    output = result.stdout.decode('utf-8')
+
+    parsed_lines = [line.split(',', 4) for line in output.splitlines() if line.strip()]
+    #parsed_lines = list(filter(lambda x: x[2] not in ["metadata", "ui", "action"], parsed_lines))
+    parsed_lines = list(filter(lambda x: x[2] in ["machine-home", "state"], parsed_lines))
+    parsed_lines_dict = dict()
+    if parsed_lines:
+        for counter, line in enumerate(parsed_lines):
+            if counter % 2 == 1:
+                parsed_lines_dict["/".join(parsed_lines[counter-1][-1].split('/')[-2:])] = line[-1]
+    return parsed_lines_dict
+
+
+
 
 class VagrantRunObject:
     def __init__(self, username, boxname):
@@ -62,7 +86,6 @@ class VagrantRunObject:
         except Exception as Err:
             logger.error("Vagrant init filed: {}".format(Err))
             return False
-
 
     def get_logs(self):
         # Open a file: file

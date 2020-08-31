@@ -33,9 +33,13 @@ class VagrantPoolLog(models.Model):
     status_code = models.CharField(max_length=10, choices=STATUS)
     status_message = models.TextField(blank=True, null=True)
     vagrant_box = models.ForeignKey(VagrantBox, on_delete=models.CASCADE)
+    worker_name = models.CharField(max_length=50, blank=True, null=True)
 
 # ! use exclusively by 'overseer.functions.addMoreToQueue()'
 class SearchBacklog(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     pagenumber = models.SmallIntegerField()
+    keyword = models.CharField(max_length=50, blank=True, null=True)
     worker_name = models.CharField(max_length=50, blank=True, null=True)
+    status_code = models.CharField(max_length=10, choices=STATUS, blank=True, null=True)
+    status_message = models.TextField(blank=True, null=True)
