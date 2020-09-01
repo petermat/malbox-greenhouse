@@ -4,10 +4,16 @@ from django.contrib import admin
 from .models import VagrantBox, SearchBacklog, VagrantPoolLog
 
 
+def clean_and_wait(modeladmin, request, queryset):
+    queryset.update(processed_at=None, status_code="W", status_message="", worker_name="")
+clean_and_wait.short_description = "Clean selected Boxes and set them to WAIT"
+
 @admin.register(VagrantBox)
 class VagrantBoxAdmin(admin.ModelAdmin):
     list_display = [f.name for f in VagrantBox._meta.fields]
     list_filter = ('status_code', 'worker_name')
+    search_fields = ('status_message', 'description')
+    actions = [clean_and_wait]
 
 
 @admin.register(VagrantPoolLog)
