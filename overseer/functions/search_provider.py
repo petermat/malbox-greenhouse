@@ -53,15 +53,15 @@ def addMoreToQueue():
             logger.warning("Search API failure. Request{}, Paramaters:{}, Response: {}".format(URL, PARAMS, r.json()))
 
             # softfail - same page failed 3 times (W)-  change status to failed
-            if SearchBacklog.objects.filter(pagenumber=last_pagenumber + 1, status_code="W",keyword=q_keyword).count()>2:
+            if SearchBacklog.objects.filter(pagenumber=last_pagenumber + 1, status_code="W",keyword=q_keyword).count()>3:
                 logger.warning(
                     "Search API failed for same pagenumber >2 times! marked as failed page and moving on. Request{}, Paramaters:{}, Response: {}".format(URL, PARAMS, r.json()))
                 SearchBacklog.objects.create(pagenumber=last_pagenumber + 1, worker_name=os.uname()[1], status_code="F",
                                              keyword=q_keyword, status_message=r.json())
 
             #  todo: if hardfail - 3 pages in row failed - exit
-            if SearchBacklog.objects.filter( status_code="F", keyword=q_keyword)\
-                    .filter(Q(pagenumber=last_pagenumber + 1) | Q(last_pagenumber) | Q(last_pagenumber + 1)).count() > 2:
+            if SearchBacklog.objects.filter( status_code="F", keyword=q_keyword).filter(
+                    Q(pagenumber=last_pagenumber + 1) | Q(pagenumber=last_pagenumber) | Q(pagenumber=last_pagenumber + 1)).count() > 2:
                 logger.error(
                     "Search API failed for >2 pages in row! Hard Exit. Request{}, Paramaters:{}, Response: {}".format(
                         URL, PARAMS, r.json()))
