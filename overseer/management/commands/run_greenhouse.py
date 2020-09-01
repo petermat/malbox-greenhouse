@@ -63,7 +63,7 @@ class Command(BaseCommand):
                         vagBox_tmp1.status_code = "F"
                         vagBox_tmp1.status_message = "VagrantBox {}/{} was found NOT to be running in global status but is DB. Marking as failed.".format(vagBox_tmp1.username, vagBox_tmp1.boxname)
                         vagBox_tmp1.save()
-                        VagrantPoolLog.objects.create(status_code="F", vagrant_box=vagBox_obj, worker_name=os.uname()[1],
+                        VagrantPoolLog.objects.create(status_code="F", vagrant_box=vagBox_tmp1, worker_name=os.uname()[1],
                                                       status_message="found NOT to be running in global status but is DB. Marking as failed")
 
             while VagrantBox.objects.filter(Q(status_code='W') | Q(status_code='R')| Q(status_code='I')).count() < MAX_POOL:
