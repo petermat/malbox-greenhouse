@@ -66,14 +66,15 @@ class Command(BaseCommand):
                         VagrantPoolLog.objects.create(status_code="F", vagrant_box=vagBox_tmp1, worker_name=os.uname()[1],
                                                       status_message="found NOT to be running in global status but is DB. Marking as failed")
 
-            while VagrantBox.objects.filter(Q(status_code='W') | Q(status_code='R')| Q(status_code='I')).count() < MAX_POOL:
+
+            while VagrantBox.objects.filter(worker_name=os.uname()[1]).filter(Q(status_code='W') | Q(status_code='R')| Q(status_code='I')).count() < MAX_POOL:
                 vagBox_obj = VagrantBox.objects.filter(processed_at__isnull=True).exclude(status_code="W").first()
                 if not vagBox_obj:
                     logger.info("No Candidates to run, requesting new results")
                     addMoreToQueue()
                     vagBox_obj = VagrantBox.objects.filter(processed_at__isnull=True).first()
 
-                VagrantPoolLog.objects.create(status_code="W", vagrant_box=vagBox_obj, worker_name = os.uname()[1])
+                VagrantPoolLog.objects.create(status_code="W", vagrant_box=vagBox_obj, worker_name=os.uname()[1])
                 logger.debug("VagrantBox {}/{} changed to 'Waiting'".format(vagBox_obj.username, vagBox_obj.boxname))
                 vagBox_obj.status_code = "W"
                 vagBox_obj.worker_name = os.uname()[1]
@@ -83,9 +84,9 @@ class Command(BaseCommand):
                 #  else
 
 
-            while psutil.virtual_memory().available > MEMORY_FREELIMIT and VagrantBox.objects.filter(status_code='W'):
+            while psutil.virtual_memory().available > MEMORY_FREELIMIT and VagrantBox.objects.filter(worker_name=os.uname()[1], status_code='W'):
 
-                vagBox_obj = VagrantBox.objects.filter(status_code="W").order_by('?').first()
+                vagBox_obj = VagrantBox.objects.filter(worker_name=os.uname()[1], status_code="W").order_by('?').first()
                 vagBox_obj.status_code = "I"
                 vagBox_obj.worker_name = os.uname()[1]
                 vagBox_obj.save()
@@ -122,10 +123,13 @@ class Command(BaseCommand):
                 #del vagRunObj
                 #del vagrantPoolLog_obj
 
-            if VagrantBox.objects.filter(status_code='W') and not psutil.virtual_memory().available > MEMORY_FREELIMIT:
+            if VagrantBox.objects.filter(status_code='W') and not psutil.virtual_memory().available < MEMORY_FREELIMIT:
                 logger.warning("Not enough memory ({}MB) to run another Boxes, going to sleep before loop".format(
                         psutil.virtual_memory().available // 1024 // 1024))
 
+            if not VagrantBox.objects.filter(status_code='W') and psutil.virtual_memory().available > MEMORY_FREELIMIT:
+                logger.warning("No boxes in W states but still enough memory ({}MB) to run another Boxes".format(
+                        psutil.virtual_memory().available // 1024 // 1024))
 
             logger.debug("Sleep time: {}s bofore loop".format(SLEEP_SECONDS))
             time.sleep(SLEEP_SECONDS)
