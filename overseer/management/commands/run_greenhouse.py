@@ -123,11 +123,11 @@ class Command(BaseCommand):
                 #del vagRunObj
                 #del vagrantPoolLog_obj
 
-            if VagrantBox.objects.filter(status_code='W') and not psutil.virtual_memory().available < MEMORY_FREELIMIT:
+            if VagrantBox.objects.filter(worker_name=os.uname()[1],status_code='W') and not psutil.virtual_memory().available < MEMORY_FREELIMIT:
                 logger.warning("Not enough memory ({}MB) to run another Boxes, going to sleep before loop".format(
                         psutil.virtual_memory().available // 1024 // 1024))
 
-            if not VagrantBox.objects.filter(status_code='W') and psutil.virtual_memory().available > MEMORY_FREELIMIT:
+            if not VagrantBox.objects.filter(worker_name=os.uname()[1], status_code='W') and psutil.virtual_memory().available > MEMORY_FREELIMIT:
                 logger.warning("No boxes in W states but still enough memory ({}MB) to run another Boxes".format(
                         psutil.virtual_memory().available // 1024 // 1024))
 
