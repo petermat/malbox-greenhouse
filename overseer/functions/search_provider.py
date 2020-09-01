@@ -49,7 +49,7 @@ def addMoreToQueue():
 
         else:
             SearchBacklog.objects.create(pagenumber=last_pagenumber + 1, worker_name=os.uname()[1], status_code="W", keyword=q_keyword,
-                                         status_message=data)
+                                         status_message=r.json())
             logger.warning("Search API failure. Request{}, Paramaters:{}, Response: {}".format(URL, PARAMS, r.json()))
 
             # softfail - same page failed 3 times (W)-  change status to failed
@@ -57,7 +57,7 @@ def addMoreToQueue():
                 logger.warning(
                     "Search API failed for same pagenumber >2 times! marked as failed page and moving on. Request{}, Paramaters:{}, Response: {}".format(URL, PARAMS, r.json()))
                 SearchBacklog.objects.create(pagenumber=last_pagenumber + 1, worker_name=os.uname()[1], status_code="F",
-                                             keyword=q_keyword, status_message=data)
+                                             keyword=q_keyword, status_message=r.json())
 
             #  todo: if hardfail - 3 pages in row failed - exit
             if SearchBacklog.objects.filter( status_code="F", keyword=q_keyword)\
@@ -67,7 +67,7 @@ def addMoreToQueue():
                         URL, PARAMS, r.json()))
                 SearchBacklog.objects.create(pagenumber=last_pagenumber + 1, worker_name=os.uname()[1],
                                              status_code="F",
-                                             keyword=q_keyword, status_message=data)
+                                             keyword=q_keyword, status_message=r.json())
                 sys.exit(1)
             time.sleep(20) #  Failed api call timer
 
