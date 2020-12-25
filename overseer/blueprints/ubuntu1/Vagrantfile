@@ -1,18 +1,22 @@
 Vagrant.configure("2") do |config|
   config.vm.box = "{{ username }}/{{ boxname }}"
   #config.vm.box_version = "0.0.1"
-  config.ssh.username = "vagrant"
-  config.ssh.password = "vagrant"
+  #config.ssh.username = "vagrant"
+  #config.ssh.password = "vagrant"
   config.vm.hostname = "{{ username_no_underscore }}-{{ boxname_no_underscore }}"
   #config.disksize.size = '8GB' #conflict on slightly bigger images
   config.vm.synced_folder ".", "/vagrant"
   config.vm.provision :shell, path: "bootstrap.sh"
-  config.vm.boot_timeout = 1200
+  config.vm.boot_timeout = 1800
   config.vm.provider "virtualbox" do |vb, override|
          vb.name = "{{ username }}-{{ boxname }}"
-         vb.gui = true
+         vb.gui = false
          vb.customize ["modifyvm", :id, "--memory", 512]
          vb.customize ["modifyvm", :id, "--cpus", 1]
+         vb.customize ["modifyvm", :id, "--vram", "32"]
          vb.customize ["modifyvm", :id, "--uartmode1", "disconnected" ]
+         vb.customize ["setextradata", "global", "GUI/SuppressMessages", "all" ]
+         vb.customize ["modifyvm", :id, "--usb", "on"]
+         vb.customize ["modifyvm", :id, "--usbehci", "off"]
   end
 end

@@ -30,12 +30,15 @@ class Command(BaseCommand):
             for vagBox_obj_tmp in VagrantBox.objects.filter(Q(status_code="R")|Q(status_code="I"),
                                                             processed_at__lte=(timezone.now() - timedelta(minutes=RUN_MINUTES)),
                                                             worker_name=os.uname()[1]):
+                extra = {'box': '{}/{}'.format(vagBox_obj_tmp.username, vagBox_obj_tmp.boxname)}
                 vagRunObj_tmp = VagrantRunObject(vagBox_obj_tmp.username, vagBox_obj_tmp.boxname)
                 VagrantPoolLog.objects.create(status_code="D", vagrant_box=vagBox_obj_tmp, worker_name = os.uname()[1])
 
-                logger.debug("About to destroy {}/{}. Served for {} minutes.".format(vagBox_obj_tmp.username, vagBox_obj_tmp.boxname,SLEEP_SECONDS))
+                logger.debug("About to destroy {}/{}. Served for {} minutes.".format(vagBox_obj_tmp.username, vagBox_obj_tmp.boxname,SLEEP_SECONDS),
+                             extra=extra)
                 vagRunObj_tmp.destroy()
-                logger.info("Destroyed {}/{}, natural cause".format(vagBox_obj_tmp.username, vagBox_obj_tmp.boxname))
+                logger.info("Destroyed {}/{}, natural cause".format(vagBox_obj_tmp.username, vagBox_obj_tmp.boxname),
+                             extra=extra)
                 vagBox_obj_tmp.status_code = "D"
                 vagBox_obj_tmp.worker_name = os.uname()[1]
                 vagBox_obj_tmp.save()
@@ -75,7 +78,8 @@ class Command(BaseCommand):
                     vagBox_obj = VagrantBox.objects.filter(processed_at__isnull=True).first()
 
                 VagrantPoolLog.objects.create(status_code="W", vagrant_box=vagBox_obj, worker_name=os.uname()[1])
-                logger.debug("VagrantBox {}/{} changed to 'Waiting'".format(vagBox_obj.username, vagBox_obj.boxname))
+                logger.debug("VagrantBox {}/{} changed to 'Waiting'".format(vagBox_obj.username, vagBox_obj.boxname),
+                             extra={'box': '{}/{}'.format(vagBox_obj_tmp.username, vagBox_obj_tmp.boxname)})
                 vagBox_obj.status_code = "W"
                 vagBox_obj.worker_name = os.uname()[1]
                 vagBox_obj.save()
@@ -91,7 +95,8 @@ class Command(BaseCommand):
                 vagBox_obj.worker_name = os.uname()[1]
                 vagBox_obj.save()
                 logger.info("Vagrantbox starting init sequence: {}/{}, found {} candidates".format(vagBox_obj.username, vagBox_obj.boxname,
-                                               VagrantBox.objects.filter(status_code="W").count() ))
+                                               VagrantBox.objects.filter(status_code="W").count() ),
+                            extra = {'box': '{}/{}'.format(vagBox_obj_tmp.username, vagBox_obj_tmp.boxname)})
                 vagRunObj = VagrantRunObject(vagBox_obj.username, vagBox_obj.boxname)
                 vagrantPoolLog_obj = VagrantPoolLog.objects.create(status_code="I", vagrant_box=vagBox_obj, worker_name = os.uname()[1])
                 vagrantPoolLog_obj.save()
@@ -101,7 +106,8 @@ class Command(BaseCommand):
                     vagBox_obj.processed_at = timezone.now()
                     vagBox_obj.status_code = "R"
                     vagBox_obj.status_message = vagRunObj.get_logs()
-                    logger.info("Vagrantbox initiated: {}/{}".format(vagBox_obj.username, vagBox_obj.boxname))
+                    logger.info("Vagrantbox initiated: {}/{}".format(vagBox_obj.username, vagBox_obj.boxname),
+                                extra = {'box': '{}/{}'.format(vagBox_obj_tmp.username, vagBox_obj_tmp.boxname)})
                     vagrantPoolLog_obj = VagrantPoolLog.objects.create(status_code="R", vagrant_box=vagBox_obj,
                                                                        worker_name=os.uname()[1])
                     vagrantPoolLog_obj.status_message = vagRunObj.get_logs()
@@ -109,14 +115,16 @@ class Command(BaseCommand):
                 else:
                     vagBox_obj.status_code = "F"
                     vagBox_obj.processed_at = timezone.now()
-                    logger.error("Vagrantbox init Failed: {}/{}".format(vagBox_obj.username, vagBox_obj.boxname))
+                    logger.error("Vagrantbox init Failed: {}/{}".format(vagBox_obj.username, vagBox_obj.boxname),
+                                 extra={'box': '{}/{}'.format(vagBox_obj.username, vagBox_obj.boxname)})
                     vagrantPoolLog_obj = VagrantPoolLog.objects.create(status_code="F", vagrant_box=vagBox_obj,
                                                                        worker_name=os.uname()[1])
                     vagrantPoolLog_obj.status_message = vagRunObj.get_logs()
                     vagrantPoolLog_obj.save()
                     vagBox_obj.status_message = vagRunObj.get_logs()
                     vagRunObj.destroy()
-                    logger.info("Destroyed after fail {}/{}".format(vagBox_obj.username, vagBox_obj.boxname))
+                    logger.info("Destroyed after fail {}/{}".format(vagBox_obj.username, vagBox_obj.boxname),
+                                extra = {'box': '{}/{}'.format(vagBox_obj_tmp.username, vagBox_obj_tmp.boxname)})
 
                 vagBox_obj.save()
                 #del vagBox_obj

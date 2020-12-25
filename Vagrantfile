@@ -40,7 +40,8 @@ Vagrant.configure("2") do |config|
  config.vm.define "malbox-logger" do |cfg|
     cfg.vm.box = "bento/ubuntu-18.04"
     cfg.vm.hostname = "malbox-logger"
-    cfg.vm.provision :shell, path: "logger.sh"
+    cfg.vm.provision :shell, path: "vagrant/logger.sh"
+    cfg.vm.provision :shell, path: "vagrant/postgres.sh"
     cfg.vm.network :private_network, ip: "192.168.38.199", gateway: "192.168.38.1", dns: "8.8.8.8"
 
     cfg.vm.provider "virtualbox" do |vb, override|

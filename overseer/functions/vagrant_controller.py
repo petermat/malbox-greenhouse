@@ -15,7 +15,7 @@ logger = logging.getLogger("overseer")
 def getActiveVagrantboxes():
 
     # vagrant global-status --prune
-    # vagrant global-status --machine-readable
+    # vagrant global-Vagrant about to UPstatus --machine-readable
 
     subprocess.run(['vagrant', 'global-status', '--prune'], stdout=subprocess.PIPE)
     result = subprocess.run(['vagrant', 'global-status', '--machine-readable'], stdout=subprocess.PIPE)
