@@ -54,7 +54,9 @@ class VagrantRunObject:
                                           #env=env
                                           )
         #logger.debug("error_obj: ", error_obj)
-        logger.debug("Vagrantfile native object created: {}/{}".format(username, boxname))
+        logger.debug("Vagrantfile native object created: {}/{}".format(username, boxname),
+                     extra={'box': '{}/{}'.format(self.username, self.boxname)}
+                     )
 
 
     def init_vagrant(self):
@@ -74,17 +76,22 @@ class VagrantRunObject:
         logger.debug("Blueprint files copied to Vagrantile folder {}/{}".format(self.username, self.boxname))
 
         open(os.path.join(self.vagrantdir_path, 'Vagrantfile'), "w").write(render_to_string(templatefile, context))
-        logger.debug("Vagrantfile prepared: {}/{}".format(self.username, self.boxname))
+        logger.debug("Vagrantfile prepared: {}/{}".format(self.username, self.boxname),
+                     extra={'box': '{}/{}'.format(self.username, self.boxname)}
+                     )
 
 
     def up_vagrant(self):
-        logger.debug("Vagrant about to UP: {}".format(self.vagrantdir_path))
+        logger.debug("Vagrant about to UP: {}".format(self.vagrantdir_path),
+                     extra={'box': '{}/{}'.format(self.username, self.boxname)})
         try:
             self.native_obj.up()
-            logger.info("Vagrant Box UP done: {}".format(self.vagrantdir_path))
+            logger.info("Vagrant Box UP done: {}".format(self.vagrantdir_path),
+                        extra={'box': '{}/{}'.format(self.username, self.boxname)})
             return True
         except Exception as Err:
-            logger.error("Vagrant init filed: {}".format(Err))
+            logger.error("Vagrant init filed: {}".format(Err),
+                         extra={'box': '{}/{}'.format(self.username, self.boxname)})
             return False
 
     def get_logs(self):
@@ -99,12 +106,15 @@ class VagrantRunObject:
         try:
             self.native_obj.destroy()
         except Exception as Err:
-            logger.warning("Vagrant destroy failed!")
+            logger.warning("Vagrant destroy failed! {}/{}".format(self.username, self.boxname),
+                           extra={'box': '{}/{}'.format(self.username, self.boxname)})
         os.system("cd {} && vagrant destroy --force".format(self.vagrantdir_path))
         shutil.rmtree(os.path.join(os.environ['HOME'], '.vagrant.d', 'boxes', '{}-VAGRANTSLASH-{}'.format(self.username, self.boxname)),
                       ignore_errors=True
                       )
-        logger.info("Box destroyed: {}/{}".format(self.username, self.boxname))
+        logger.info("Box destroyed: {}/{}".format(self.username, self.boxname),
+                    extra={'box': '{}/{}'.format(self.username, self.boxname)}
+                    )
 
     def status(self):
         self.native_obj.status()
