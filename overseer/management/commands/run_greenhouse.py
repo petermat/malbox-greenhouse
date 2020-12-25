@@ -79,7 +79,7 @@ class Command(BaseCommand):
 
                 VagrantPoolLog.objects.create(status_code="W", vagrant_box=vagBox_obj, worker_name=os.uname()[1])
                 logger.debug("VagrantBox {}/{} changed to 'Waiting'".format(vagBox_obj.username, vagBox_obj.boxname),
-                             extra={'box': '{}/{}'.format(vagBox_obj_tmp.username, vagBox_obj_tmp.boxname)})
+                             extra={'box': '{}/{}'.format(vagBox_obj.username, vagBox_obj.boxname)})
                 vagBox_obj.status_code = "W"
                 vagBox_obj.worker_name = os.uname()[1]
                 vagBox_obj.save()
@@ -96,7 +96,7 @@ class Command(BaseCommand):
                 vagBox_obj.save()
                 logger.info("Vagrantbox starting init sequence: {}/{}, found {} candidates".format(vagBox_obj.username, vagBox_obj.boxname,
                                                VagrantBox.objects.filter(status_code="W").count() ),
-                            extra = {'box': '{}/{}'.format(vagBox_obj_tmp.username, vagBox_obj_tmp.boxname)})
+                            extra = {'box': '{}/{}'.format(vagBox_obj.username, vagBox_obj.boxname)})
                 vagRunObj = VagrantRunObject(vagBox_obj.username, vagBox_obj.boxname)
                 vagrantPoolLog_obj = VagrantPoolLog.objects.create(status_code="I", vagrant_box=vagBox_obj, worker_name = os.uname()[1])
                 vagrantPoolLog_obj.save()
@@ -107,7 +107,7 @@ class Command(BaseCommand):
                     vagBox_obj.status_code = "R"
                     vagBox_obj.status_message = vagRunObj.get_logs()
                     logger.info("Vagrantbox initiated: {}/{}".format(vagBox_obj.username, vagBox_obj.boxname),
-                                extra = {'box': '{}/{}'.format(vagBox_obj_tmp.username, vagBox_obj_tmp.boxname)})
+                                extra = {'box': '{}/{}'.format(vagBox_obj.username, vagBox_obj.boxname)})
                     vagrantPoolLog_obj = VagrantPoolLog.objects.create(status_code="R", vagrant_box=vagBox_obj,
                                                                        worker_name=os.uname()[1])
                     vagrantPoolLog_obj.status_message = vagRunObj.get_logs()
@@ -124,7 +124,7 @@ class Command(BaseCommand):
                     vagBox_obj.status_message = vagRunObj.get_logs()
                     vagRunObj.destroy()
                     logger.info("Destroyed after fail {}/{}".format(vagBox_obj.username, vagBox_obj.boxname),
-                                extra = {'box': '{}/{}'.format(vagBox_obj_tmp.username, vagBox_obj_tmp.boxname)})
+                                extra = {'box': '{}/{}'.format(vagBox_obj.username, vagBox_obj.boxname)})
 
                 vagBox_obj.save()
                 #del vagBox_obj
