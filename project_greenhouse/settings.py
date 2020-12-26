@@ -149,8 +149,8 @@ LOGGING = {
             '()': 'colorlog.ColoredFormatter',
             'format': '%(log_color)s%(asctime)s %(levelname)-8s %(message)s',
             'log_colors': {
-                'DEBUG':    'bold_black',
-                'INFO':     'white',
+                'DEBUG':    'blue',#'bold_black',
+                'INFO':     'green',
                 'WARNING':  'yellow',
                 'ERROR':    'red',
                 'CRITICAL': 'bold_red',

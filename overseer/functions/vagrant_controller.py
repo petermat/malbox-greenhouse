@@ -82,19 +82,22 @@ class VagrantRunObject:
                      )
 
     @timeout_decorator.timeout(60*60)
+    def up_vagrant_timed(self):
+        # output-> generator yielding lines of output
+        for outline in self.native_obj.up(stream_output=True):
+            print("\033[37m  " + outline.strip() + "\033[0m")
+        logger.info("Vagrant Box UP done: {}".format(self.vagrantdir_path),
+                    extra={'box': '{}/{}'.format(self.username, self.boxname)})
+        return True
+
     def up_vagrant(self):
         logger.debug("Vagrant about to UP: {}".format(self.vagrantdir_path),
                      extra={'box': '{}/{}'.format(self.username, self.boxname)})
         try:
+            self.up_vagrant_timed()
             #self.native_obj.up()
 
-            # todo: try up(stream_output=True), printing by lane to debug
-            # output-> generator yielding lines of output
-            for outline in self.native_obj.up(stream_output=True):
-                print("\033[37m  "+outline.strip()+"\033[0m")
-            logger.info("Vagrant Box UP done: {}".format(self.vagrantdir_path),
-                        extra={'box': '{}/{}'.format(self.username, self.boxname)})
-            return True
+
         except Exception as Err:
             logger.error("Vagrant init filed: {}".format(Err),
                          extra={'box': '{}/{}'.format(self.username, self.boxname)})
