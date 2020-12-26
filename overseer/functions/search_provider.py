@@ -38,7 +38,9 @@ def addMoreToQueue():
                 username, boxname = boxdetail['tag'].split("/")
                 if not VagrantBox.objects.filter(username=username, boxname=boxname).count():
                     vag_obj = VagrantBox.objects.create(username=username, boxname=boxname, description=boxdetail,
-                                                        worker_name=os.uname()[1])
+                                                        #worker_name=os.uname()[1]
+                                                        status_code='W'
+                                                         )
                     vag_obj.tags.add('autoadded', )
                     logger.debug("Box ADDED: {}".format(boxdetail['tag']))
                     foundOne = True
