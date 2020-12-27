@@ -43,6 +43,7 @@ install_packages(){
   #curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash –
   apt-get -y -qq install nodejs
   apt-get -y -qq install npm
+  apt-get -y -qq install gparted
   apt-get -y -qq install python3 python-dev python3-dev python3-virtualenv \
      build-essential libssl-dev libffi-dev \
      libxml2-dev libxslt1-dev zlib1g-dev \
@@ -70,7 +71,6 @@ install_vagrant(){
   apt-get install -y virtualbox
   apt-get install -y virtualbox-guest-additions-iso
   apt-get install -y vagrant
-  apt-get install -y gparted
 }
 
 main(){
@@ -87,3 +87,4 @@ main(){
 
 main
 exit 0
+

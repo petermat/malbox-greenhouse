@@ -27,7 +27,6 @@ class VagrantBox(models.Model):
     #result_message =
 
 
-
 class VagrantPoolLog(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     status_code = models.CharField(max_length=10, choices=STATUS)
@@ -35,7 +34,8 @@ class VagrantPoolLog(models.Model):
     vagrant_box = models.ForeignKey(VagrantBox, on_delete=models.CASCADE)
     worker_name = models.CharField(max_length=50, blank=True, null=True)
 
-# ! use exclusively by 'overseer.functions.addMoreToQueue()'
+
+# !!! use only by 'overseer.functions.addMoreToQueue()'
 class SearchBacklog(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     pagenumber = models.SmallIntegerField()
@@ -43,3 +43,18 @@ class SearchBacklog(models.Model):
     worker_name = models.CharField(max_length=50, blank=True, null=True)
     status_code = models.CharField(max_length=10, choices=STATUS, blank=True, null=True)
     status_message = models.TextField(blank=True, null=True)
+
+
+class Indicator():
+    created_at = models.DateTimeField(auto_now_add=True)
+    severity = models.SmallIntegerField()  # 0 debug, 1 info, 2 warn, 3 alert, 4 confirmed
+    category = models.CharField(max_length=50, blank=True, null=True)
+    description = models.CharField(max_length=1000, blank=True, null=True)
+    splunk_query = models.CharField(max_length=1000, blank=True, null=True)
+
+
+class IndicatorFireLog(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    severity = models.SmallIntegerField()  # 0 debug, 1 info, 2 warn, 3 alert, 4 confirmed
+
+
